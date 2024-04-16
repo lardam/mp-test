@@ -26,7 +26,7 @@ export default function Home() {
       }
     })
 
-    redirect(preference.sandbox_init_point!)
+    redirect(preference.init_point!)
   }
 
   return (
