@@ -9,7 +9,7 @@ export interface IProduct {
   export const Product: IProduct = {
     id: 1,
     title: "Notebook",
-    price: 500,
+    price: 20,
     description: [
       "Pantalla Ultra HD de 15.6 pulgadas con tecnología antirreflejos y resolución de 3840 x 2160.",
       "Procesador Intel Core i9 de última generación con 16 GB de memoria RAM y almacenamiento SSD de 1 TB.",

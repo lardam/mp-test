@@ -1,50 +1,22 @@
-import mercadopago from "mercadopago";
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import { MercadoPagoConfig, Payment } from "mercadopago";
+import { createClient } from "@supabase/supabase-js";
 
-// A fines del tutorial pongo un token de muestra, pero siempre esta información se tiene que manejar
-// como variable de entorno en un archivo .env
+const mp = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN!});
+const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET!);
 
-if(process.env.MP_ACCESS_TOKEN){
-    mercadopago.configure({
-      access_token: process.env.MP_ACCESS_TOKEN,
-    });
-}
+export async function POST(req: NextRequest) {
+  const body = await req.json().then((data) => data as {data: {id: string}});
 
+  const transaccion = await new Payment(mp).get({id: body.data.id});
 
-export async function GET(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams;
-  const topic = searchParams.get('topic') || searchParams.get('type');
-
-  console.log({ topic });
-  try {
-    if (topic === "payment") {
-      const paymentId = searchParams.get('id') || searchParams.get('data.id');
-      let payment = await mercadopago.payment.findById(Number(paymentId));
-      let paymentStatus = payment.body.status;
-
-      console.log({ payment, paymentStatus });
-
-      return new Response(JSON.stringify({ payment, paymentStatus }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-    } else {
-      return new Response(JSON.stringify({ message: "Invalid topic" }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify({ message: "Internal Server Error", error: "Error" }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  const pago = {
+    id: transaccion.id,
+    amount: transaccion.transaction_amount,
+    message: transaccion.description
   }
+
+  await sb.from('pagos').insert(pago);
+
+  return Response.json({success: true})
 }

@@ -1,46 +1,41 @@
-"use client"
-
 import Plan from "@/components/producto";
 import { IProduct, Product } from "@/mock/producto";
+import MercadoPagoConfig, { Preference } from "mercadopago";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { redirect } from "next/navigation";
+
+const client = new MercadoPagoConfig({accessToken: process.env.MP_ACCESS_TOKEN!})
 
 export default function Home() {
-  const [url, setUrl] = useState<null | string>(null);
+  async function pagar(){
+    "use server"
 
-  useEffect(() => {
-    const generateLink = async () => {
-      try{
-        const res = await fetch("/api/payment", {
-          method: "POST",
-          body: JSON.stringify(Product),
-          headers: {
-            "Content-Type": "application/json"
+    const prod = Product;
+
+    const preference = await new Preference(client)
+    .create({
+      body: {
+        items: [
+          {
+            id: 'pago',
+            title: prod.title,
+            quantity: 1,
+            unit_price: prod.price
           }
-        })
-        
-        const data = await res.json()
-
-        setUrl(data.link)
-
-        } catch(error){
-        console.log(error)
+        ]
       }
-    }
-    if(url === null){
-      generateLink()
-    }
-    }, [url]
-  )
+    })
 
-  console.log(url)
+    redirect(preference.sandbox_init_point!)
+  }
+
   return (
     <>
       {/* <Plan /> */}
       <h1>Prueba</h1>
-      {url === null ?
-        null : <Link href={url} target="_blank">Pagar</Link>
-      }
+      <form action={pagar}>
+        <button type="submit">Pagar</button>
+      </form>
     </>
   );
 }
